@@ -1,10 +1,13 @@
 package com.fd.cloudsocket.handler;
 
+import com.alibaba.fastjson.JSONObject;
 import com.fd.cloudsocket.constant.SysConstant;
-import com.fd.cloudsocket.service.SocketMessageSendService;
+import com.fd.cloudsocket.message.WebSocketMessageStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -12,12 +15,12 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 @Component
-public class WebSocketMessageHandler extends AbstractWebSocketHandler {
+public class WebSocketMessageHandler extends AbstractWebSocketHandler{
 
     private Logger log = LoggerFactory.getLogger(WebSocketMessageHandler.class);
 
     @Autowired
-    private SocketMessageSendService socketMessageSendService = new SocketMessageSendService();
+    private WebSocketMessageStream webSocketMessageStream;
 
     /**
      * websocket连接创建后调用
@@ -41,8 +44,13 @@ public class WebSocketMessageHandler extends AbstractWebSocketHandler {
      */
     @Override
     protected void handleTextMessage(WebSocketSession currentSession, TextMessage message) throws Exception {
-        log.info("收到text 消息：{}",message);
-        socketMessageSendService.sendTextMessage(message.getPayload());
+        log.info("Socket 收到text 消息：{},并开始发送到消息队列",message);
+        // 推送到消息队列
+        JSONObject param = JSONObject.parseObject(message.getPayload());
+        // 添加消息标识符
+        param.put("fromSessionId",currentSession.getId());
+        Message mqMessage = MessageBuilder.withPayload(param.toJSONString()).build();
+        webSocketMessageStream.outPut().send(mqMessage);
     }
 
     /**
@@ -53,6 +61,7 @@ public class WebSocketMessageHandler extends AbstractWebSocketHandler {
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        SysConstant.sessionMap.remove(session.getId());
         super.afterConnectionClosed(session, status);
     }
 
@@ -64,6 +73,7 @@ public class WebSocketMessageHandler extends AbstractWebSocketHandler {
      */
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        SysConstant.sessionMap.remove(session.getId());
         super.handleTransportError(session, exception);
     }
 

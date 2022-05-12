@@ -24,6 +24,7 @@ public class MessageSendController {
         Map<String,Object> map = new HashMap<>();
         map.put("shopId","123");
         map.put("targetUserId",targetUserId);
+        map.put("time",System.currentTimeMillis());
         Message message = MessageBuilder.withPayload(map).build();
         webSocketMessageStream.outPut().send(message);
         Map<String,Object> result = new HashMap<>();

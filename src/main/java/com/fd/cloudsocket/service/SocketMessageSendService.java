@@ -1,5 +1,6 @@
 package com.fd.cloudsocket.service;
 
+import com.alibaba.cloud.commons.lang.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.fd.cloudsocket.constant.SysConstant;
 import org.slf4j.Logger;
@@ -21,11 +22,12 @@ public class SocketMessageSendService {
         JSONObject messageJson = JSONObject.parseObject(content);
         String targerUserId = messageJson.getString("targetUserId");
         TextMessage socketMessage = new TextMessage(content);
-        for (
-                Map.Entry<String, WebSocketSession> entry : SysConstant.sessionMap.entrySet()) {
+        for (Map.Entry<String, WebSocketSession> entry : SysConstant.sessionMap.entrySet()) {
             try {
-                if (ObjectUtils.isEmpty(targerUserId) || entry.getKey().equals(targerUserId)) {
-                    log.info("开始发送socket消息，to sessionId:{},消息内容：{}",entry.getKey(),content);
+                if (!StringUtils.equals(entry.getKey(),messageJson.getString("fromSessionId"))
+                        && (ObjectUtils.isEmpty(targerUserId) || entry.getKey().equals(targerUserId))) {
+                    messageJson.put("time",System.currentTimeMillis());
+                    log.info("开始发送socket消息，to sessionId:{},消息内容：{}", entry.getKey(), messageJson.toJSONString());
                     entry.getValue().sendMessage(socketMessage);
                 }
             } catch (IOException e) {

@@ -21,8 +21,7 @@ public class MqMessageHandler {
 
     @StreamListener(WebSocketMessageStream.WEBSOCKET_MESSAGE_IN)
     private void messageReceived(Message<String> message) {
-        log.info("收到消息：{}", message.getPayload());
-        log.info("开始转发到socket连接");
+        log.info("MQ收到消息：{},开始转发到socket连接", message.getPayload());
         socketMessageSendService.sendTextMessage(message.getPayload());
 
     }
