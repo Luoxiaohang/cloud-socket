@@ -1,0 +1,35 @@
+server:
+  port: 7081
+  servlet:
+    context-path: /cloud-socket
+spring:
+  application:
+    name: cloud-socket
+  cloud:
+    nacos:
+      config:
+        server-addr: 192.168.0.47:8848
+        file-extension: properties
+        namespace: 4dkankan-dev
+      discovery:
+        server-addr: 192.168.0.47:8848
+        namespace: 4dkankan-dev
+    stream:
+      binders:
+        defaultRabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: 120.25.146.52
+                port: 5672
+                username: guest
+                password: 4dagecui2019$
+                virtual-host: /
+      bindings:
+        websocketMessageIn:
+          destination: websocketMessage
+          binder: defaultRabbit
+        websocketMessageOut:
+          destination: websocketMessage
+          binder: defaultRabbit
